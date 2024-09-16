@@ -1,27 +1,32 @@
 const { readFileSync } = require('fs');
 
 function gerarFaturaStr (fatura, pecas) {
-  
-  function calcularTotalApresentacao(apre, peca) {
-      let total = 0;
-      switch (peca.tipo) {
-          case "tragedia":
-              total = 40000;
-              if (apre.audiencia > 30) {
-                  total += 1000 * (apre.audiencia - 30);
-              }
-              break;
-          case "comedia":
-              total = 30000;
-              if (apre.audiencia > 20) {
-                  total += 10000 + 500 * (apre.audiencia - 20);
-              }
-              total += 300 * apre.audiencia;
-              break;
-          default:
-              throw new Error(`Peça desconhecida: ${peca.tipo}`);
-      }
-      return total;
+
+  function getPeca(apresentacao) {
+    return pecas[apresentacao.id];
+  }
+
+  function calcularTotalApresentacao(apre) {
+    let total = 0;
+    const peca = getPeca(apre);  // Usando getPeca dentro da função
+    switch (peca.tipo) {
+        case "tragedia":
+            total = 40000;
+            if (apre.audiencia > 30) {
+                total += 1000 * (apre.audiencia - 30);
+            }
+            break;
+        case "comedia":
+            total = 30000;
+            if (apre.audiencia > 20) {
+                total += 10000 + 500 * (apre.audiencia - 20);
+            }
+            total += 300 * apre.audiencia;
+            break;
+        default:
+            throw new Error(`Peça desconhecida: ${peca.tipo}`);
+    }
+    return total;
   }
 
   let totalFatura = 0;
@@ -30,13 +35,11 @@ function gerarFaturaStr (fatura, pecas) {
   const formato = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }).format;
 
   for (let apre of fatura.apresentacoes) {
-      const peca = pecas[apre.id];
-      let total = calcularTotalApresentacao(apre, peca);  // Usando a função extraída
-
-      // Mais lógica para calcular créditos e gerar string da fatura...
-      faturaStr += `  ${peca.nome}: ${formato(total / 100)} (${apre.audiencia} assentos)\n`;
-      totalFatura += total;
+    let total = calcularTotalApresentacao(apre);
+    faturaStr += `  ${getPeca(apre).nome}: ${formato(total / 100)} (${apre.audiencia} assentos)\n`;
+    totalFatura += total;
   }
+
   faturaStr += `Valor total: ${formato(totalFatura / 100)}\n`;
   faturaStr += `Créditos acumulados: ${creditos} \n`;
   return faturaStr;
